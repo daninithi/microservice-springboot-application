@@ -2,14 +2,17 @@
 
 A backend-focused Order Management System built using Spring Boot and a microservices architecture.
 
-The project demonstrates REST API development, database persistence, service-to-service communication, API Gateway routing, validation, exception handling, pagination, sorting, order status management, and product stock management.
+The project demonstrates REST API development, database persistence, service-to-service communication using OpenFeign, API Gateway routing, validation, exception handling, pagination, sorting, order status management, and product stock management.
 
 ## Architecture
 
 ```text
                          Client
+
                            |
+
                            v
+
                   +-------------------+
                   |    API Gateway    |
                   |       :8080       |
@@ -21,10 +24,12 @@ The project demonstrates REST API development, database persistence, service-to-
         +----------------+    +----------------+
         | Order Service  |    | Product Service|
         |     :8081      |    |     :8082      |
-        +-------+--------+    +-------+--------+
-                |                     |
-                |   REST / RestClient|
-                +-------------------->
+        +-------+--------+    +----------------+
+                |
+                | OpenFeign
+                |
+                v
+        Product Service :8082
 ```
 
 ### Services
@@ -40,18 +45,20 @@ The project demonstrates REST API development, database persistence, service-to-
 * Java 21
 * Spring Boot 4.1.1
 * Spring Cloud Gateway
+* Spring Cloud OpenFeign
 * Spring Data JPA
 * REST APIs
-* Spring RestClient
 * PostgreSQL
 * Maven
 * Jakarta Bean Validation
 * Git
+* Apache HttpClient 5
 
 ## Project Structure
 
 ```text
 order-management/
+
 │
 ├── api-gateway/
 │   └── src/
@@ -83,6 +90,7 @@ order-management/
 * Reduce product stock when an order is created
 * Global exception handling
 * Request validation
+* Service-to-service communication using OpenFeign
 
 ### Product Service
 
@@ -206,19 +214,19 @@ http://localhost:8080
 
 External API requests should normally go through the API Gateway.
 
-### Get products
+### Get Products
 
 ```bash
 curl http://localhost:8080/api/products
 ```
 
-### Get orders
+### Get Orders
 
 ```bash
 curl http://localhost:8080/api/orders
 ```
 
-### Create a product
+### Create a Product
 
 ```bash
 curl -X POST http://localhost:8080/api/products \
@@ -231,7 +239,7 @@ curl -X POST http://localhost:8080/api/products \
   }'
 ```
 
-### Create an order
+### Create an Order
 
 ```bash
 curl -X POST http://localhost:8080/api/orders \
@@ -254,12 +262,13 @@ API Gateway
   v
 Order Service
   |
-  | RestClient
+  | OpenFeign
   v
 Product Service
   |
   | Check stock
   | Reduce stock
+  |
   v
 Order Service
   |
@@ -296,18 +305,26 @@ PENDING
 
 ## Service-to-Service Communication
 
-Order Service communicates directly with Product Service using Spring `RestClient`.
+Order Service communicates directly with Product Service using **Spring Cloud OpenFeign**.
 
 ```text
 Order Service :8081
        |
-       | RestClient
+       | OpenFeign
        |
        v
 Product Service :8082
 ```
 
-The API Gateway is not used for internal service-to-service communication.
+The API Gateway is **not** used for internal service-to-service communication.
+
+Feign provides a declarative HTTP client interface for communication between the services.
+
+The Product Service URL is configured in the Order Service:
+
+```properties
+product-service.url=http://localhost:8082
+```
 
 ## Important Design Principles
 
@@ -317,6 +334,7 @@ Each microservice has its own database.
 
 ```text
 Order Service   -> order_db
+
 Product Service -> products_db
 ```
 
@@ -345,6 +363,18 @@ Database
 
 Business logic is kept inside the service layer rather than controllers.
 
+### Declarative Service Communication
+
+OpenFeign is used to simplify service-to-service HTTP communication.
+
+```text
+Order Service
+     |
+     | Feign Interface
+     v
+Product Service API
+```
+
 ## Learning Goals
 
 This project is designed to practice:
@@ -358,7 +388,7 @@ This project is designed to practice:
 * Exception handling
 * Microservices
 * Service-to-service communication
-* Spring RestClient
+* Spring Cloud OpenFeign
 * API Gateway
 * Clean project structure
 * Git and Maven

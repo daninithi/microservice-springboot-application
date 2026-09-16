@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.order.order.client.ProductResponse;
 import com.order.order.client.ProductServiceClient;
+import com.order.order.client.UpdateStockRequest;
 import com.order.order.dto.request.CreateOrderRequest;
 import com.order.order.dto.request.UpdateOrderStatusRequest;
 import com.order.order.dto.response.OrderResponse;
@@ -57,9 +58,12 @@ public class OrderService {
         }
 
         // Step 3: Reduce product stock
+        UpdateStockRequest stockRequest =
+        new UpdateStockRequest(-request.getQuantity());
+
         productServiceClient.updateStock(
                 request.getProductId(),
-                -request.getQuantity()
+                stockRequest
         );
 
         // Step 4: Create the order
